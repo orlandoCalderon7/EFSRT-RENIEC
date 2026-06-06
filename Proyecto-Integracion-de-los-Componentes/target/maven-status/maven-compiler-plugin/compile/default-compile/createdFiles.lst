@@ -1,5 +1,6 @@
 reniec\sechura\SechuraApplication.class
 reniec\sechura\repository\OficinaRENIECRepository.class
+reniec\sechura\config\DatabaseStartupFix.class
 reniec\sechura\repository\HorarioRepository.class
 reniec\sechura\controller\CitaController.class
 reniec\sechura\domain\Usuario.class
@@ -8,12 +9,16 @@ reniec\sechura\domain\Notificacion.class
 reniec\sechura\domain\Ciudadano.class
 reniec\sechura\domain\Persona.class
 reniec\sechura\repository\TipoTramiteRepository.class
+reniec\sechura\repository\VerificacionBiofacialRepository.class
+reniec\sechura\service\BiofacialService.class
 reniec\sechura\domain\Tramite.class
 reniec\sechura\domain\EstadoTramite.class
+reniec\sechura\domain\VerificacionBiofacial.class
 reniec\sechura\repository\CiudadanoRepository.class
 reniec\sechura\domain\OficinaRENIEC.class
 reniec\sechura\service\UsuarioService.class
 reniec\sechura\controller\AuthController.class
+reniec\sechura\controller\AuthController$BiofacialRequest.class
 reniec\sechura\repository\UsuarioRepository.class
 reniec\sechura\service\CitaService.class
 reniec\sechura\domain\Administrador.class
