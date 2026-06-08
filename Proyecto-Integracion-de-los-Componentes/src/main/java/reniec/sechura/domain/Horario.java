@@ -1,3 +1,4 @@
+// Entidad que representa un horario disponible para citas en el sistema de RENIEC Sechura
 package reniec.sechura.domain;
 
 import jakarta.persistence.*;

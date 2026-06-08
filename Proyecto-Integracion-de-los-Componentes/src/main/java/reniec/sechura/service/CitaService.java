@@ -1,3 +1,4 @@
+// Servicio para gestionar la lógica de negocio relacionada con las citas en el sistema de RENIEC Sechura
 package reniec.sechura.service;
 
 import org.springframework.beans.factory.annotation.Autowired;

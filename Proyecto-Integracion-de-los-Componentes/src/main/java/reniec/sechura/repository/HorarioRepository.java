@@ -1,3 +1,4 @@
+// Repositorio para gestionar los horarios disponibles en el sistema de RENIEC Sechura
 package reniec.sechura.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;

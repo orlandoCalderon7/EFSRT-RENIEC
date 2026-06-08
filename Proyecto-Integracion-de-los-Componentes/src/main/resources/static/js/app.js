@@ -1,3 +1,4 @@
+// Archivo principal de JavaScript para la aplicación de gestión de citas y trámites en RENIEC Sechura
 const API_BASE = window.location.origin;
 
 const state = {
@@ -216,38 +217,54 @@ function toIsoDate(date) {
 
 function getNextDateForHorario(horario) {
   const now = new Date();
-  const target = diaIndex[horario.diaSemana] ?? now.getDay();
-  const date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  let diff = target - date.getDay();
-  if (diff < 0) diff += 7;
-  date.setDate(date.getDate() + diff);
+  const todayIndex = now.getDay(); // 0=Dom, 1=Lun, ...
+  const target = diaIndex[horario.diaSemana] ?? todayIndex;
 
-  const [hour = 0, minute = 0] = String(horario.horaInicio || '00:00').split(':').map(Number);
-  const startDateTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, minute);
-  if (startDateTime <= now) {
-    date.setDate(date.getDate() + 7);
+  // Calcular días de diferencia
+  let diff = target - todayIndex;
+  if (diff < 0) diff += 7;
+
+  // Construir la fecha objetivo sin problemas de zona horaria
+  const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
+
+  // Verificar si el horario de hoy ya pasó
+  if (diff === 0 && horario.horaInicio) {
+    const [hour = 0, minute = 0] = String(horario.horaInicio).split(':').map(Number);
+    const startDateTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, minute);
+    if (startDateTime <= now) {
+      date.setDate(date.getDate() + 7);
+    }
   }
 
   return toIsoDate(date);
 }
+
 
 function getFechasDisponibles(horarios) {
   const map = new Map();
 
   horarios.forEach((horario) => {
     const fecha = getNextDateForHorario(horario);
+    // Clave única por fecha + idHorario para evitar duplicados
+    const key = `${fecha}_${horario.idHorario}`;
     if (!map.has(fecha)) {
       map.set(fecha, {
         fecha,
-        dia: horario.diaSemana || diasSemana[new Date(fecha).getDay()],
+        dia: horario.diaSemana || diasSemana[new Date(fecha + 'T00:00:00').getDay()],
         items: []
       });
     }
-    map.get(fecha).items.push(horario);
+    // Solo agregar si este horario no está ya en esa fecha
+    const grupo = map.get(fecha);
+    const yaExiste = grupo.items.some((item) => item.idHorario === horario.idHorario);
+    if (!yaExiste) {
+      grupo.items.push(horario);
+    }
   });
 
   return Array.from(map.values()).sort((a, b) => a.fecha.localeCompare(b.fecha));
 }
+
 
 function resetTramiteFlow() {
   state.tramite = null;
@@ -355,6 +372,13 @@ async function cargarFechasDisponibles() {
 
   try {
     state.horarios = await request(`${API_BASE}/api/citas/horarios/1`);
+
+
+    console.log('Horarios recibidos:', state.horarios.length, state.horarios);
+    state.fechasDisponibles = getFechasDisponibles(state.horarios);
+    console.log('Fechas agrupadas:', state.fechasDisponibles);
+    state.fechasDisponibles.forEach(f => console.log(f.fecha, '→', f.items.length, 'items'));
+
 
     if (!state.horarios.length) {
       diasGrid.innerHTML = '<div class="empty-state">No hay fechas disponibles para reservar cita.</div>';

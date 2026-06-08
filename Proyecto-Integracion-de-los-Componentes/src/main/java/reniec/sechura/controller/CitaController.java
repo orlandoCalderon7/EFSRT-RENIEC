@@ -1,3 +1,4 @@
+// Controlador para gestionar las citas en el sistema de RENIEC Sechura
 package reniec.sechura.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
