@@ -851,3 +851,56 @@ textarea {
   margin-left: auto !important;
   flex-shrink: 0;
 }
+
+.calendar-wrapper {
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  margin-top: 15px;
+  border: 1px solid #e0e0e0;
+}
+
+#fecha-picker {
+  width: 100%;
+  padding: 15px;
+  font-size: 1.1rem;
+  border: 2px solid #003366; /* Azul RENIEC */
+  border-radius: 8px;
+  cursor: pointer;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%23003366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 20px;
+}
+
+#fecha-picker:hover {
+  background-color: #f0f4f8;
+}
+
+/* Esto hace que el input responda en toda su área */
+.calendar-wrapper {
+    position: relative;
+    cursor: pointer;
+}
+
+#fecha-picker {
+    pointer-events: all !important;
+    z-index: 1;
+}
+
+/* Asegura que el calendario siempre esté por encima de todo */
+.flatpickr-calendar {
+    z-index: 9999 !important;
+}
+
+/* Hace que el cursor cambie a mano para indicar que es clickeable */
+#fecha-picker {
+    cursor: pointer !important;
+    background-color: white !important; /* Evita que se vea gris por el readonly */
+}
+
+/* Evita que el contenedor bloquee el clic */
+.calendar-wrapper {
+    position: relative;
+    z-index: 10;
+}

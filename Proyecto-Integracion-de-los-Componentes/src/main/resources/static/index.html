@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sistema RENIEC Sechura</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/material_blue.css">
+
 </head>
 <body>
   <main class="app-shell">
@@ -116,9 +119,18 @@
 
       <div class="tramite-summary" id="tramiteResumen"></div>
 
-      <div class="subsection-title">Fechas disponibles</div>
-      <div id="diasGrid" class="days-grid"></div>
+      <!-- CAMBIO AQUÍ: Quitamos el grid y ponemos el input del calendario -->
+      <div class="calendar-wrapper">
+        <label for="fecha-picker" class="subsection-title">Toca para elegir una fecha:</label>
+        <div class="input-with-icon">
+          <input type="text" id="fecha-picker" placeholder="Seleccione el día de su cita..." readonly>
+        </div>
+      </div>
+      
+      <!-- Mantenemos este div oculto por si necesitas usarlo de apoyo -->
+      <div id="diasGrid" class="days-grid hidden"></div>
     </section>
+
 
     <section class="panel view hidden" id="viewHorarios">
       <div class="panel-header between">
@@ -163,6 +175,10 @@
   </div>
 
   <div id="toast" class="toast hidden"></div>
+
+  <!-- Librerías del Calendario -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
   <script src="js/app.js"></script>
 </body>

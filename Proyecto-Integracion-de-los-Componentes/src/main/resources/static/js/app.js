@@ -65,6 +65,8 @@ const diasGrid = $('#diasGrid');
 const tituloHorarios = $('#tituloHorarios');
 const horariosGrid = $('#horariosGrid');
 const misTramitesBox = $('#misTramitesBox');
+const fechaPickerInput = $('#fecha-picker'); 
+
 
 const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const diaIndex = {
@@ -75,8 +77,7 @@ const diaIndex = {
   'Miercoles': 3,
   'Jueves': 4,
   'Viernes': 5,
-  'Sábado': 6,
-  'Sabado': 6
+  'Sábado': 6,  
 };
 
 function showToast(message, isError = false) {
@@ -217,54 +218,49 @@ function toIsoDate(date) {
 
 function getNextDateForHorario(horario) {
   const now = new Date();
-  const todayIndex = now.getDay(); // 0=Dom, 1=Lun, ...
+  // Ajuste para que el índice coincida con tu objeto diaIndex
+  const todayIndex = now.getDay(); 
   const target = diaIndex[horario.diaSemana] ?? todayIndex;
 
-  // Calcular días de diferencia
   let diff = target - todayIndex;
-  if (diff < 0) diff += 7;
-
-  // Construir la fecha objetivo sin problemas de zona horaria
-  const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
-
-  // Verificar si el horario de hoy ya pasó
-  if (diff === 0 && horario.horaInicio) {
-    const [hour = 0, minute = 0] = String(horario.horaInicio).split(':').map(Number);
-    const startDateTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, minute);
-    if (startDateTime <= now) {
-      date.setDate(date.getDate() + 7);
-    }
+  
+  // Si el día ya pasó en la semana actual (ej: hoy es lunes y el horario es de domingo)
+  // lo mandamos a la siguiente semana.
+  if (diff < 0) {
+    diff += 7;
   }
+
+  // Creamos la fecha base para ese día de la semana
+  const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
 
   return toIsoDate(date);
 }
 
-
-function getFechasDisponibles(horarios) {
+function getFechasDisponibles(horariosBase) {
   const map = new Map();
+  const hoy = new Date();
 
-  horarios.forEach((horario) => {
-    const fecha = getNextDateForHorario(horario);
-    // Clave única por fecha + idHorario para evitar duplicados
-    const key = `${fecha}_${horario.idHorario}`;
-    if (!map.has(fecha)) {
-      map.set(fecha, {
-        fecha,
-        dia: horario.diaSemana || diasSemana[new Date(fecha + 'T00:00:00').getDay()],
-        items: []
+  // Generamos fechas para los próximos 30 días
+  for (let i = 0; i < 30; i++) {
+    const fechaBucle = new Date();
+    fechaBucle.setDate(hoy.getDate() + i);
+    
+    const diaNombre = diasSemana[fechaBucle.getDay()]; // 'Lunes', 'Martes', etc.
+    const fechaIso = toIsoDate(fechaBucle);
+
+    // Buscamos si hay horarios configurados para ese día de la semana (ej: todos los Lunes)
+    const horariosParaEsteDia = horariosBase.filter(h => h.diaSemana === diaNombre);
+
+    if (horariosParaEsteDia.length > 0) {
+      map.set(fechaIso, {
+        fecha: fechaIso,
+        items: horariosParaEsteDia
       });
     }
-    // Solo agregar si este horario no está ya en esa fecha
-    const grupo = map.get(fecha);
-    const yaExiste = grupo.items.some((item) => item.idHorario === horario.idHorario);
-    if (!yaExiste) {
-      grupo.items.push(horario);
-    }
-  });
+  }
 
   return Array.from(map.values()).sort((a, b) => a.fecha.localeCompare(b.fecha));
 }
-
 
 function resetTramiteFlow() {
   state.tramite = null;
@@ -367,38 +363,49 @@ async function validarCitaActivaAntesDeTramite() {
 }
 
 async function cargarFechasDisponibles() {
-  diasGrid.innerHTML = '<div class="empty-state">Cargando fechas disponibles...</div>';
+  console.log("Intentando cargar calendario...")
+  if (fechaPickerInput) fechaPickerInput.value = ''; // Limpiar selección previa
   horariosGrid.innerHTML = '';
 
   try {
+    // 1. Obtener horarios del servidor
     state.horarios = await request(`${API_BASE}/api/citas/horarios/1`);
 
-
-    console.log('Horarios recibidos:', state.horarios.length, state.horarios);
-    state.fechasDisponibles = getFechasDisponibles(state.horarios);
-    console.log('Fechas agrupadas:', state.fechasDisponibles);
-    state.fechasDisponibles.forEach(f => console.log(f.fecha, '→', f.items.length, 'items'));
-
-
     if (!state.horarios.length) {
-      diasGrid.innerHTML = '<div class="empty-state">No hay fechas disponibles para reservar cita.</div>';
+      showToast("No hay horarios configurados en la base de datos", true);
       return;
     }
 
+    // 2. Agrupar por fecha y filtrar duplicados (tu lógica actual)
     state.fechasDisponibles = getFechasDisponibles(state.horarios);
-    diasGrid.innerHTML = state.fechasDisponibles.map(({ fecha, items }) => `
-      <button type="button" class="day-card" data-fecha="${fecha}">
-        <strong>${formatLongDate(fecha)}</strong>
-        <span>${items.length} horario${items.length === 1 ? '' : 's'} disponible${items.length === 1 ? '' : 's'}</span>
-      </button>
-    `).join('');
 
-    diasGrid.querySelectorAll('.day-card').forEach((button) => {
-      button.addEventListener('click', () => seleccionarFecha(button.dataset.fecha));
+    console.log("Fechas para habilitar:", state.fechasDisponibles.map(f => f.fecha));
+
+    // 3. Inicializar Flatpickr    
+    // Calcular la fecha de aquí a 7 días
+    const fechaMinima = new Date();
+    fechaMinima.setDate(fechaMinima.getDate() + 7); 
+
+    flatpickr("#fecha-picker", {
+        locale: "es",
+        minDate: fechaMinima, // <--- Bloquea los primeros 7 días desde hoy
+        maxDate: new Date().fp_incr(30), // <--- Solo permite ver los próximos 30 días (1 mes)
+        dateFormat: "Y-m-d",
+        enable: state.fechasDisponibles.map(f => f.fecha), // Solo habilita si hay turnos en DB
+        onChange: function(selectedDates, dateStr) {
+            seleccionarFecha(dateStr);
+        }
     });
+
+
+    if (fechaPickerInput) {
+        fechaPickerInput.addEventListener('click', () => fp.open());
+    }
+
+    showToast('Calendario actualizado con fechas disponibles.');
+
   } catch (error) {
-    diasGrid.innerHTML = '<div class="empty-state">No se pudieron cargar las fechas disponibles.</div>';
-    showToast(error.message, true);
+    showToast("Error al cargar el calendario: " + error.message, true);
   }
 }
 
@@ -416,12 +423,25 @@ function seleccionarFecha(fecha) {
     <span>Selecciona uno de los horarios disponibles para esta fecha.</span>
   `;
 
-  tituloHorarios.textContent = `${state.reprogramandoCita ? 'Nuevos horarios' : 'Horarios disponibles'} para ${formatLongDate(fechaData.fecha)}`;
-  horariosGrid.innerHTML = fechaData.items.map((horario) => `
+  tituloHorarios.textContent = `Horarios para ${formatLongDate(fechaData.fecha)}`;
+  
+  // --- FILTRO ANTIDUPLICADOS PARA LA VISTA ---
+  // Esto agrupa los horarios por hora de inicio para que no se repitan
+  const horariosUnicos = fechaData.items.reduce((acc, current) => {
+    const x = acc.find(item => item.horaInicio === current.horaInicio);
+    if (!x) {
+      return acc.concat([current]);
+    } else {
+      return acc;
+    }
+  }, []);
+
+  // Renderizamos solo los únicos (deberían salir solo 2: 08:00 y 14:00)
+  horariosGrid.innerHTML = horariosUnicos.map((horario) => `
     <div class="horario-card">
       <strong>${formatHour(horario.horaInicio)} - ${formatHour(horario.horaFin)}</strong>
-      <span>Cupos usados: ${horario.citasActuales}/${horario.capacidadMax}</span>
-      <button type="button" data-id-horario="${horario.idHorario}">Seleccionar horario</button>
+      <span>Cupos: ${horario.citasActuales || 0}/${horario.capacidadMax || 10}</span>
+      <button type="button" class="full-btn" data-id-horario="${horario.idHorario}">Seleccionar</button>
     </div>
   `).join('');
 
