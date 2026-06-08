@@ -48,7 +48,7 @@ Antes de ejecutar el proyecto asegúrate de tener instalado:
 
 
 ### 1. Clonar el repositorio
- git clone https://github.com/ProgramadorVictor/Proyecto-Integracion-de-los-Componentes.git
+ git clone https://github.com/orlandoCalderon7/EFSRT-RENIEC
 
 
 ##  Estructura del Proyecto
